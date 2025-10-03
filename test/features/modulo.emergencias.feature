@@ -18,3 +18,6 @@ Feature: Modulo de emergencias
     | 20-41383873-9 | tiene dolor de cabeza | Sin Urgencia | 39 | 120 | 100 | 120/80|
     Then La lista de espera esta ordenada por cuil de la siguiente manera:
     | 20-41383873-9 | 
+
+    Prueba 4
+    
