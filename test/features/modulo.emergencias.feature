@@ -8,7 +8,7 @@ Feature: Modulo de emergencias
         |Nombre| Apellido |
         |susana | gimenez |
 
-    Scenario: Registar ingreso exitoso del primer paciente
+    Scenario: Registrar ingreso exitoso del primer paciente
     Given estan registrados los siguientes pacientes:
         |cuil| nombre | apellido | obra social|
         | 20-41383873-9| ivan | ochoa| mora|
