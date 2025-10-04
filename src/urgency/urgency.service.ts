@@ -5,73 +5,77 @@ import { Ingreso } from '../admission-status/admission.status';
 import { PATIENT_REPOSITORY } from '../../src/patient/patient.constant';
 import type { PatientRepository } from 'src/patient/repository/patient.repository';
 import { EstadoIngreso } from '../../src/estado-ingreso/estado.ingreso';
+import { UrgencyValidator } from './validators/urgency.validator';
 
 @Injectable()
 export class UrgencyService {
 
-    constructor(
-    @Inject(PATIENT_REPOSITORY)
-        private readonly repository: PatientRepository, 
-        private listaDeEspera: Ingreso[]
-    ) {}
-
-    registerUrgency(cuil: string, 
-                    enfermera: Enfermera, 
-                    informe: string,
-                    emergencyLevel: EmergencyLevel,
-                    temperatura: number,
-                    frecuenciaCardiaca: number,
-                    frecuenciaRespiratorio: number,
-                    tensionArterial: number[]
-                ): void{
-        const patient = this.repository.buscarPacientePorCuil(cuil);
-        if(!patient){
-            throw new NotFoundException("Paciente no encontrado");
-        }
-
-        this.listaDeEspera.push(new Ingreso(patient, 
-                                    enfermera, 
-                                    new Date(), 
-                                    informe, 
-                                    emergencyLevel, 
-                                    temperatura, 
-                                    frecuenciaCardiaca, 
-                                    frecuenciaRespiratorio, 
-                                    tensionArterial[0], 
-                                    tensionArterial[1],
-                                    EstadoIngreso.PENDIENTE
-                                ));
-        console.log("ANTES");
-        this.listaDeEspera.forEach( l =>  console.log(l));
-        this.ordenarListaDeEspera();
-        console.log("DESPUES");
-        this.listaDeEspera.forEach( l =>  console.log(l));
+  constructor(
+  @Inject(PATIENT_REPOSITORY)
+      private readonly repository: PatientRepository, 
+      private readonly listaDeEspera: Ingreso[] = []
+  ) {}
+  private static readonly PRIORIDAD: Record<EmergencyLevel, number> = {
+    [EmergencyLevel.CRITICA]: 1,
+    [EmergencyLevel.EMERGENCIA]: 2,
+    [EmergencyLevel.URGENCIA]: 3,
+    [EmergencyLevel.URGENCIA_MENOR]: 4,
+    [EmergencyLevel.SIN_URGENCIA]: 5,
+  };
+  registerUrgency(cuil: string, 
+                  enfermera: Enfermera, 
+                  informe: string,
+                  emergencyLevel: EmergencyLevel,
+                  temperatura: number,
+                  frecuenciaCardiaca: number,
+                  frecuenciaRespiratorio: number,
+                  tensionArterial: number[]
+              ): void{
+    const patient = this.repository.findByCuil(cuil);
+    if(!patient){
+        throw new NotFoundException("Patient not found");
     }
+    //validamos antes del push
+    UrgencyValidator.validate(
+        informe,
+        emergencyLevel,
+        frecuenciaCardiaca,
+        frecuenciaRespiratorio,
+        tensionArterial
+    );
+    //pasa y agregamos
+    this.listaDeEspera.push(new Ingreso(patient, 
+                                enfermera, 
+                                new Date(), 
+                                informe, 
+                                emergencyLevel, 
+                                temperatura, 
+                                frecuenciaCardiaca, 
+                                frecuenciaRespiratorio, 
+                                tensionArterial[0], 
+                                tensionArterial[1],
+                                EstadoIngreso.PENDIENTE
+                            ));
+    this.ordenarListaDeEspera();
+  }
 
+  
+  obtenerIngresosPendientes(): Ingreso[] {
+    return this.listaDeEspera;
+  }
+  private ordenarListaDeEspera():void{
+    this.listaDeEspera.sort((a,b)=>this.compararIngresos(a,b));
     
-    obtenerIngresosPendientes(): Ingreso[] {
-        return this.listaDeEspera;
+  }
+  compararIngresos(a: Ingreso, b: Ingreso): number {
+    const prioridadA = UrgencyService.PRIORIDAD[a.emergencyLevel];
+    const prioridadB = UrgencyService.PRIORIDAD[b.emergencyLevel];
+    if(prioridadA!==prioridadB){
+      return prioridadA - prioridadB;
     }
+    return a.fechaIngreso.getTime() -b.fechaIngreso.getTime();
+  }
+  
 
-    private ordenarListaDeEspera(): void {
-    // Definir el orden de prioridad de las emergencias
-    const ordenPrioridad = {
-        [EmergencyLevel.CRITICA]: 1,
-        [EmergencyLevel.EMERGENCIA]: 2,
-        [EmergencyLevel.URGENCIA_MENOR]: 3,
-        [EmergencyLevel.SIN_URGENCIA]: 4
-    };
-
-    this.listaDeEspera.sort((a, b) => {
-        const prioridadA = ordenPrioridad[a.emergencyLevel];
-        const prioridadB = ordenPrioridad[b.emergencyLevel];
-        
-        if (prioridadA !== prioridadB) {
-            return prioridadA - prioridadB; 
-        }
-        
-        return a.fechaIngreso.getTime() - b.fechaIngreso.getTime();
-    });
-}
 
 }
