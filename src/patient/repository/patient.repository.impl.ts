@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Patient } from '../patient';
+import { Patient } from '../entities/patient';
 import { PatientRepository } from './patient.repository';
 
 

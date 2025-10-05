@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { UrgencyModule } from './urgency/urgency.module';
 import { PatientModule } from './patient/patient.module';
 import { EmergencyLevelModule } from './emergency-level/emergency-level.module';
-import { IngresoModule } from './ingreso/ingreso.module';
+import { IngresoModule } from './admission-status/enums/admission-status.enum';
 import { EstadoIngresoModule } from './estado-ingreso/estado-ingreso.module';
 
 @Module({
