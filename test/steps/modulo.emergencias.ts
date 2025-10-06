@@ -1,18 +1,19 @@
 import { Before, DataTable, Given, Then, When } from '@cucumber/cucumber';
 import { NotAcceptableException } from '@nestjs/common';
 import assert from 'assert';
-import { EmergencyLevel } from '../../src/emergency-level/enums/emergency-level.enum';
-import { Patient } from '../../src/patient/entities/patient';
-import { UrgencyService } from '../../src/urgency/urgency.service';
+import { EmergencyLevel } from '../../src/nivel-emergencia/enums/nivel-emergencia.enum';
+import { Patient } from '../../src/paciente/entities/paciente';
+import { UrgencyService } from '../../src/urgencia/urgencia.service';
 import { DataBaseInMemory } from '../../test/mock/database.memory';
-import { Enfermera } from '../../src/nurse/entities/nurse.entity';
-import { Ingreso } from 'src/admission-status/admission.status';
+import { Enfermera } from '../../src/enfermera/entities/enfermera.entity';
+import { Ingreso } from 'src/ingreso/ingreso';
+import { last } from 'rxjs';
 
 let enfermera: Enfermera;
 let mockDb: DataBaseInMemory;
 let listaDeEspera: Ingreso[];
 let urgencyService: UrgencyService;
-let lastError: unknown;
+let msgLastError: string;
 
 function registrarPacientes(dataTable) {
   const data = dataTable.hashes();
@@ -23,14 +24,17 @@ function registrarPacientes(dataTable) {
       row['apellido'],
       row['obra social'],
     );
-    mockDb.savePatient(patient);
+    mockDb.guardarPaciente(patient);
   });
+}
+function validarError(lastMsgError:string){
+  
 }
 
 Before(function () {
   mockDb = new DataBaseInMemory();
   listaDeEspera = [];
-  lastError ;
+  msgLastError;
   urgencyService = new UrgencyService(mockDb, listaDeEspera);
   console.log('=== NUEVO ESCENARIO ===');
 });
@@ -52,13 +56,14 @@ When('ingresa a urgencias el siguiente paciente:', (dataTable)=> {
   const data = dataTable.hashes();
   data.forEach((row) => {
     try {
-      const tensionArterial = row['tension arterial']?.split('/').map(Number);
+      const rawTA = row['tension arterial'];
+      const tensionArterial = rawTA ? rawTA.split('/').map(Number) : undefined; // ← no rompe si falta la tension
       const entry = row['nivel de emergencia'];
       const emergencyLevel = Object.values(EmergencyLevel).find(
         (v) => v.toLowerCase() === entry.toLowerCase(),
       );
 
-      if (!emergencyLevel) {
+      if (!emergencyLevel) { //debatir si agregarlo al urgency validator como un metodo estatico,
         throw new NotAcceptableException(
           `Nivel de emergencia no válido: ${entry}`,
         );
@@ -79,36 +84,38 @@ When('ingresa a urgencias el siguiente paciente:', (dataTable)=> {
         tensionArterial,
       );
     } catch (err: any) {
-      lastError = err.message;
+      msgLastError = err.message;
     }
   });
 });
 
-Then('La lista de espera esta ordenada por cuil de la siguiente manera:',(dataTable)=> {
-    const data = dataTable.hashes();
-    let index = 0;
-    data.forEach((r) => {
-      const row = data[index];
-      const cuil = row['cuil'];
-      const cuilPendientes = urgencyService
-        .obtenerIngresosPendientes()
-        .map((i) => i.paciente.cuil);
-      assert.strictEqual(cuilPendientes[index], cuil);
-      index++;
-    });
-  },
-);
-Then(
-  'el sistema muestra un error indicando que falta el campo {string}',
-  (campo) => {
-    assert.ok(lastError, 'No se capturó ningún error'); //tecnicamente no se usaria creo nunca
-    console.log(' Error capturado:', lastError);
-    const msg = typeof lastError === 'string' ? lastError : (lastError as any).message;
-    assert.ok(String(msg).toLowerCase().includes(campo.toLowerCase()));
-  },
-);
+Then('La lista de espera esta ordenada por cuil de la siguiente manera:', (dataTable) => {
+  const esperados = dataTable.rows().map(r => r[0]); // todos los CUIL esperados
+  const actuales = urgencyService.obtenerIngresosPendientes().map(i => i.paciente.cuil); // mapeo de cuils p comparar dsp
+  assert.deepStrictEqual(
+    actuales,
+    esperados,
+    `El orden real (${actuales.join(', ')}) no coincide con el esperado (${esperados.join(', ')})`
+  );
+});
+
+Then('el sistema muestra un error indicando que falta el campo {string}', (campo) => {
+  assert.ok(msgLastError, 'No se capturó ningún error');
+  console.log('Error capturado:', msgLastError);
+  assert.ok(
+    msgLastError.toLowerCase().includes(campo.toLowerCase()),
+    `Se esperaba que el mensaje contenga "${campo}", pero fue: "${msgLastError}"`
+  );
+});
+
 Then('el ingreso no se registra', () => {
   const pendientes = urgencyService.obtenerIngresosPendientes();
   assert.strictEqual(pendientes.length, 0);
 });
+Then('el sistema muestra un error indicando que la tension arterial debe ser positiva', () => {
+  assert.ok(msgLastError, 'No se capturó ningún error');
+  console.log('Error TA capturado:', msgLastError);
+  assert.ok(msgLastError.toLowerCase().includes('valores deben ser positivos'));
+});
+
 
