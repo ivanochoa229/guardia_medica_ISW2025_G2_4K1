@@ -1,10 +1,10 @@
 import { Inject, Injectable, MethodNotAllowedException, NotFoundException } from '@nestjs/common';
-import { EmergencyLevel } from '../emergency-level/enums/emergency-level.enum';
-import { Enfermera } from 'src/nurse/entities/nurse.entity';
-import { Ingreso } from '../admission-status/admission.status';
-import { PATIENT_REPOSITORY } from '../../src/patient/patient.constant';
-import type { PatientRepository } from 'src/patient/repository/patient.repository';
-import { EstadoIngreso } from '../../src/estado-ingreso/estado.ingreso';
+import { EmergencyLevel } from '../nivel-emergencia/enums/nivel-emergencia.enum';
+import { Enfermera } from 'src/enfermera/entities/enfermera.entity';
+import { Ingreso } from '../ingreso/ingreso';
+import { PATIENT_REPOSITORY } from '../paciente/patient.constant';
+import type { PatientRepository } from 'src/paciente/repository/patient.repository';
+import { EstadoIngreso } from '../estado-ingreso/enums/estado-ingreso.enum';
 import { UrgencyValidator } from './validators/urgency.validator';
 
 @Injectable()
@@ -28,10 +28,10 @@ export class UrgencyService {
                   emergencyLevel: EmergencyLevel,
                   temperatura: number,
                   frecuenciaCardiaca: number,
-                  frecuenciaRespiratorio: number,
-                  tensionArterial: number[]
+                  frecuenciaRespiratoria: number,
+                  tensionArterial: [number,number]
               ): void{
-    const patient = this.repository.findByCuil(cuil);
+    const patient = this.repository.buscarPacientePorCuil(cuil);
     if(!patient){
         throw new NotFoundException("Patient not found");
     }
@@ -40,7 +40,7 @@ export class UrgencyService {
         informe,
         emergencyLevel,
         frecuenciaCardiaca,
-        frecuenciaRespiratorio,
+        frecuenciaRespiratoria,
         tensionArterial
     );
     //pasa y agregamos
@@ -50,8 +50,8 @@ export class UrgencyService {
                                 informe, 
                                 emergencyLevel, 
                                 temperatura, 
-                                frecuenciaCardiaca, 
-                                frecuenciaRespiratorio, 
+                                frecuenciaCardiaca,
+                                frecuenciaRespiratoria,
                                 tensionArterial[0], 
                                 tensionArterial[1],
                                 EstadoIngreso.PENDIENTE
@@ -67,7 +67,7 @@ export class UrgencyService {
     this.listaDeEspera.sort((a,b)=>this.compararIngresos(a,b));
     
   }
-  compararIngresos(a: Ingreso, b: Ingreso): number {
+  private compararIngresos(a: Ingreso, b: Ingreso): number {
     const prioridadA = UrgencyService.PRIORIDAD[a.emergencyLevel];
     const prioridadB = UrgencyService.PRIORIDAD[b.emergencyLevel];
     if(prioridadA!==prioridadB){
