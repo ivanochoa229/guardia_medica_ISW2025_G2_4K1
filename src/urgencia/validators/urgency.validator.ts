@@ -11,9 +11,9 @@ export class UrgencyValidator {
   ) {
     this.required(informe, 'informe');
     this.required(emergencyLevel, 'nivel de emergencia');
-    this.nonNegativeNumber(frecuenciaCardiaca, 'frecuencia cardiaca');
-    this.nonNegativeNumber(frecuenciaRespiratoria, 'frecuencia respiratoria');
-    this.validTension(tensionArterial);
+    this.positiveNumber(frecuenciaCardiaca, 'frecuencia cardiaca');
+    this.positiveNumber(frecuenciaRespiratoria, 'frecuencia respiratoria');
+    this.validTension(tensionArterial, 'tension arterial');
   }
 
   // requerido
@@ -23,8 +23,8 @@ export class UrgencyValidator {
     }
   }
 
-  // requerido + numérico + no negativo
-  private static nonNegativeNumber(value: any, field: string) {
+  // requerido + numérico + positivo
+  private static positiveNumber(value: any, field: string) {
     if (value === undefined || value === null || value === '') {
       throw new NotAcceptableException(`falta el campo mandatorio "${field}"`);
     }
@@ -32,21 +32,24 @@ export class UrgencyValidator {
     if (!Number.isFinite(n)) {
       throw new NotAcceptableException(`${field} inválida: debe ser numérica`);
     }
-    if (n < 0) {
-      throw new NotAcceptableException(`${field} no puede ser negativo`);
+    if (n <= 0) {
+      throw new NotAcceptableException(`${field} tiene que ser un número positivo`);
     }
   }
 
   // validador de tensión arterial para
-  private static validTension(tensionArterial: number[]) {
+  private static validTension(tensionArterial: number[], field: string) {
     if (!Array.isArray(tensionArterial) || tensionArterial.length !== 2) {
-      throw new NotAcceptableException('tensión arterial inválida: se esperan dos valores');
+      throw new NotAcceptableException(`${field} inválida: se esperan dos valores`);
     }
     const [sistolica, diastolica] = tensionArterial.map(Number);
     if (!Number.isFinite(sistolica) || !Number.isFinite(diastolica)) {
       throw new NotAcceptableException('tensión arterial inválida: valores no numéricos');
     }
-    if (sistolica <= 0 || diastolica <= 0) {
+    if (sistolica == 0 || diastolica == 0) {
+      throw new NotAcceptableException(`${field} inválida: se esperan dos valores`);
+    }
+    if (sistolica < 0 || diastolica < 0) {
       throw new NotAcceptableException('tensión arterial inválida: valores deben ser positivos');
     }
     if (sistolica < diastolica) {
