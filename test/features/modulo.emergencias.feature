@@ -45,10 +45,11 @@ Scenario: Ingreso de un paciente con dato mandatorio omitido
     | cuil          | nombre | apellido | obra social |
     | 20-41383873-9 | abel   | lopez    | mora        |
   When ingresa a urgencias el siguiente paciente:
-    | cuil          | nivel de emergencia | temperatura | frecuencia cardiaca | frecuencia respiratoria | tension arterial |
-    | 20-41383873-9 | Emergencia          | 38          | 100                 | 25                      | 120/80           |
+    | cuil          | informe | nivel de emergencia | temperatura | frecuencia cardiaca | frecuencia respiratoria | tension arterial |
+    | 20-41383873-9 | | Emergencia          | 38          | 100                 | 25                      | 120/80           |
   Then el sistema muestra un error indicando que falta el campo "informe"
   And el ingreso no se registra
+
 @tensionArterialInvalida
 Scenario: Ingreso de un paciente con tension arterial invalida
   Given esta registrado el siguiente paciente:

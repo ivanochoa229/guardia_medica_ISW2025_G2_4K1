@@ -34,9 +34,8 @@ function validarError(lastMsgError:string){
 Before(function () {
   mockDb = new DataBaseInMemory();
   listaDeEspera = [];
-  msgLastError;
+  msgLastError = '';
   urgencyService = new UrgencyService(mockDb, listaDeEspera);
-  console.log('=== NUEVO ESCENARIO ===');
 });
 
 Given('que la siguiente enfermera está registrada:', (dataTable) => {
@@ -58,16 +57,7 @@ When('ingresa a urgencias el siguiente paciente:', (dataTable)=> {
     try {
       const rawTA = row['tension arterial'];
       const tensionArterial = rawTA ? rawTA.split('/').map(Number) : undefined; // ← no rompe si falta la tension
-      const entry = row['nivel de emergencia'];
-      const emergencyLevel = Object.values(EmergencyLevel).find(
-        (v) => v.toLowerCase() === entry.toLowerCase(),
-      );
-
-      if (!emergencyLevel) { //debatir si agregarlo al urgency validator como un metodo estatico,
-        throw new NotAcceptableException(
-          `Nivel de emergencia no válido: ${entry}`,
-        );
-      }
+      const emergencyLevel = row['nivel de emergencia'];
 
       const temperatura = Number(row['temperatura']);
       const frecuenciaCardiaca = Number(row['frecuencia cardiaca']);
