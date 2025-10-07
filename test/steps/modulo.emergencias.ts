@@ -98,10 +98,12 @@ Then('el sistema muestra un error indicando que falta el campo {string}', (campo
   );
 });
 
+
 Then('el ingreso no se registra', () => {
   const pendientes = urgencyService.obtenerIngresosPendientes();
   assert.strictEqual(pendientes.length, 0);
 });
+
 Then('el sistema muestra un error indicando que la tension arterial debe ser positiva', () => {
   assert.ok(msgLastError, 'No se capturó ningún error');
   console.log('Error TA capturado:', msgLastError);
