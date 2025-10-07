@@ -44,16 +44,16 @@ export class UrgencyValidator {
     }
     const [sistolica, diastolica] = tensionArterial.map(Number);
     if (!Number.isFinite(sistolica) || !Number.isFinite(diastolica)) {
-      throw new NotAcceptableException('tensión arterial inválida: valores no numéricos');
+      throw new NotAcceptableException(`${field} inválida: valores no numéricos`);
     }
     if (sistolica == 0 || diastolica == 0) {
       throw new NotAcceptableException(`${field} inválida: se esperan dos valores`);
     }
     if (sistolica < 0 || diastolica < 0) {
-      throw new NotAcceptableException('tensión arterial inválida: valores deben ser positivos');
+      throw new NotAcceptableException(`${field} inválida: valores deben ser positivos`);
     }
     if (sistolica < diastolica) {
-      throw new NotAcceptableException('tensión arterial inválida: sistólica no puede ser menor que diastólica');
+      throw new NotAcceptableException(`${field} inválida: sistólica no puede ser menor que diastólica`);
     }
   }
 }

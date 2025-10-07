@@ -31,11 +31,12 @@ function validarError(lastMsgError:string){
   
 }
 
-Before(function () {
+Before((scenario)  => {
   mockDb = new DataBaseInMemory();
   listaDeEspera = [];
   msgLastError = '';
   urgencyService = new UrgencyService(mockDb, listaDeEspera);
+  console.log(`SCENARIO: ${scenario.pickle.name}`);
 });
 
 Given('que la siguiente enfermera está registrada:', (dataTable) => {
